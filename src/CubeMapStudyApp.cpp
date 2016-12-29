@@ -45,8 +45,8 @@ void CubeMapStudyApp::setup()
 	mCamera.lookAt(vec3(0, 0, 4), vec3(0), vec3(0, 1, 0));
 	mUiCamera = CameraUi(& mCamera, getWindow());
 
-	mSdrUpdateCubeMap = gl::GlslProg::create(loadAsset("passThrough_v.glsl"), loadAsset("updateCubeMap_f.glsl"));
-	mSdrRenderCubeMap = gl::GlslProg::create(loadAsset("passThrough_v.glsl"), loadAsset("cubeMapSample_f.glsl"));
+	mSdrUpdateCubeMap = gl::GlslProg::create(loadAsset("updateCubeMap_v.glsl"), loadAsset("updateCubeMap_f.glsl"));
+	mSdrRenderCubeMap = gl::GlslProg::create(loadAsset("cubeMapSample_v.glsl"), loadAsset("cubeMapSample_f.glsl"));
 
 	gl::enableDepth();
 	gl::enableFaceCulling();
