@@ -23,7 +23,7 @@ class CubeMapStudyApp : public App {
 	CameraUi mUiCamera;
 
 	gl::FboCubeMapRef mFbo;
-	TriMeshRef mSphereMesh;
+	gl::VboMeshRef mSphereMesh;
 	gl::GlslProgRef mSdrUpdateCubeMap;
 	gl::GlslProgRef mSdrRenderCubeMap;
 };
@@ -38,7 +38,7 @@ void CubeMapStudyApp::prepSettings(Settings * settings) {
 
 void CubeMapStudyApp::setup()
 {
-	mSphereMesh = TriMesh::create(geom::Sphere().center(vec3(0)).subdivisions(60).radius(1.0f));
+	mSphereMesh = gl::VboMesh::create(geom::Sphere().center(vec3(0)).subdivisions(60).radius(1.0f));
 
 	mFbo = gl::FboCubeMap::create(cubeMapSide, cubeMapSide);
 
@@ -73,6 +73,7 @@ void CubeMapStudyApp::draw()
 	{
 		gl::ScopedMatrices scpMat;
 		gl::setMatricesWindow(cubeMapSide, cubeMapSide);
+		gl::ScopedViewport scpView(0, 0, cubeMapSide, cubeMapSide);
 		gl::ScopedGlslProg scpShader(mSdrUpdateCubeMap);
 
 		mFbo->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X);
@@ -117,7 +118,7 @@ void CubeMapStudyApp::draw()
 		gl::ScopedGlslProg scpShader(mSdrRenderCubeMap);
 		gl::ScopedTextureBind scpTex(mFbo->getTextureCubeMap());
 
-		gl::draw(*mSphereMesh);
+		gl::draw(mSphereMesh);
 	}
 }
 
