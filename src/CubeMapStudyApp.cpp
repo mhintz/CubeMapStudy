@@ -22,9 +22,14 @@ class CubeMapStudyApp : public App {
 	CameraPersp mCamera;
 	CameraUi mUiCamera;
 
-	gl::FboCubeMapRef mFbo;
+	gl::TextureCubeMapRef mCubeTex;
+	GLuint mCubeFramebuffer;
+
+	gl::FboCubeMapRef mCubeFboObj;
+
 	gl::VboMeshRef mPointMesh;
 	gl::VboMeshRef mSphereMesh;
+
 	gl::GlslProgRef mSdrUpdateCubeMap;
 	gl::GlslProgRef mSdrRenderCubeMap;
 };
@@ -46,16 +51,23 @@ void CubeMapStudyApp::setup()
 	mPointMesh = gl::VboMesh::create(1, GL_POINTS, { { pointVboLayout, pointVbo } });
 
 	auto colorTextureFormat = gl::TextureCubeMap::Format()
-		.internalFormat(GL_RGB32F)
+		.internalFormat(GL_RGB)
 		.wrap(GL_CLAMP_TO_EDGE)
 		.minFilter(GL_NEAREST)
-		.magFilter(GL_NEAREST);
+		.magFilter(GL_NEAREST)
+		.mipmap(false);
 
-	auto fboFmt = gl::FboCubeMap::Format()
+	auto fboCubeMapFormat = gl::FboCubeMap::Format()
 		.textureCubeMapFormat(colorTextureFormat)
 		.disableDepth();
 
-	mFbo = gl::FboCubeMap::create(cubeMapSide, cubeMapSide, fboFmt);
+	mCubeFboObj = gl::FboCubeMap::create(cubeMapSide, cubeMapSide, fboCubeMapFormat);
+
+	mCubeTex = gl::TextureCubeMap::create(cubeMapSide, cubeMapSide, colorTextureFormat);
+
+	glGenFramebuffers(1, & mCubeFramebuffer);
+
+
 
 	mCamera.lookAt(vec3(0, 0, 4), vec3(0), vec3(0, 1, 0));
 	mUiCamera = CameraUi(& mCamera, getWindow());
@@ -63,30 +75,29 @@ void CubeMapStudyApp::setup()
 	mSdrUpdateCubeMap = gl::GlslProg::create(loadAsset("updateCubeMap_v.glsl"), loadAsset("updateCubeMap_f.glsl"), loadAsset("updateCubeMap_g.glsl"));
 	mSdrRenderCubeMap = gl::GlslProg::create(loadAsset("cubeMapSample_v.glsl"), loadAsset("cubeMapSample_f.glsl"));
 
-	gl::enableDepth();
 	gl::enableFaceCulling();
 	gl::cullFace(GL_BACK);
 
 	// doesn't work :/
-	mFbo->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X);
-	gl::clear(Color(1, 1, 1));
+	// mCubeFboObj->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X);
+	// gl::clear(Color(1, 1, 1));
 
-	mFbo->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X);
-	gl::clear(Color(1, 1, 1));
+	// mCubeFboObj->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X);
+	// gl::clear(Color(1, 1, 1));
 
-	mFbo->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y);
-	gl::clear(Color(1, 1, 1));
+	// mCubeFboObj->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y);
+	// gl::clear(Color(1, 1, 1));
 
-	mFbo->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y);
-	gl::clear(Color(1, 1, 1));
+	// mCubeFboObj->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y);
+	// gl::clear(Color(1, 1, 1));
 
-	mFbo->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z);
-	gl::clear(Color(1, 1, 1));
+	// mCubeFboObj->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z);
+	// gl::clear(Color(1, 1, 1));
 
-	mFbo->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z);
-	gl::clear(Color(1, 1, 1));
+	// mCubeFboObj->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z);
+	// gl::clear(Color(1, 1, 1));
 
-	mFbo->unbindFramebuffer();
+	// mCubeFboObj->unbindFramebuffer();
 }
 
 void CubeMapStudyApp::mouseDown( MouseEvent event )
@@ -112,53 +123,57 @@ void CubeMapStudyApp::draw()
 		gl::ScopedViewport scpView(0, 0, cubeMapSide, cubeMapSide);
 		gl::ScopedGlslProg scpShader(mSdrUpdateCubeMap);
 
-		mFbo->bindFramebuffer();
+		mCubeFboObj->bindFramebuffer();
 
-		// gl::clear(Color(0, 0, 0));
+		gl::clear(Color(0, 0, 0));
 
 		gl::draw(mPointMesh);
 
-		// mFbo->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X);
+		mCubeFboObj->unbindFramebuffer();
+
+		// mCubeFboObj->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X);
 		// gl::clear(Color(0, 0, 0));
 		// mSdrUpdateCubeMap->uniform("cubeSide", 0);
 		// gl::drawSolidRect(Rectf(0, 0, cubeMapSide, cubeMapSide));
 
-		// mFbo->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X);
+		// mCubeFboObj->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X);
 		// gl::clear(Color(0, 0, 0));
 		// mSdrUpdateCubeMap->uniform("cubeSide", 1);
 		// gl::drawSolidRect(Rectf(0, 0, cubeMapSide, cubeMapSide));
 
-		// mFbo->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y);
+		// mCubeFboObj->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y);
 		// gl::clear(Color(0, 0, 0));
 		// mSdrUpdateCubeMap->uniform("cubeSide", 2);
 		// gl::drawSolidRect(Rectf(0, 0, cubeMapSide, cubeMapSide));
 
-		// mFbo->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y);
+		// mCubeFboObj->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y);
 		// gl::clear(Color(0, 0, 0));
 		// mSdrUpdateCubeMap->uniform("cubeSide", 3);
 		// gl::drawSolidRect(Rectf(0, 0, cubeMapSide, cubeMapSide));
 
-		// mFbo->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z);
+		// mCubeFboObj->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z);
 		// gl::clear(Color(0, 0, 0));
 		// mSdrUpdateCubeMap->uniform("cubeSide", 4);
 		// gl::drawSolidRect(Rectf(0, 0, cubeMapSide, cubeMapSide));
 
-		// mFbo->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z);
+		// mCubeFboObj->bindFramebufferFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z);
 		// gl::clear(Color(0, 0, 0));
 		// mSdrUpdateCubeMap->uniform("cubeSide", 5);
 		// gl::drawSolidRect(Rectf(0, 0, cubeMapSide, cubeMapSide));
 
-		mFbo->unbindFramebuffer();
+		// mCubeFboObj->unbindFramebuffer();
 	}
 
 	{
+		gl::ScopedDepth scpDepth(true);
+
 		gl::ScopedMatrices scpMat;
 		gl::setMatrices(mCamera);
 
 		gl::clear( Color( 0, 0, 0 ) );
 
 		gl::ScopedGlslProg scpShader(mSdrRenderCubeMap);
-		gl::ScopedTextureBind scpTex(mFbo->getTextureCubeMap());
+		gl::ScopedTextureBind scpTex(mCubeFboObj->getTextureCubeMap());
 
 		gl::draw(mSphereMesh);
 	}
